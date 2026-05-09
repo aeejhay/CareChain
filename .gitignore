@@ -1,0 +1,14 @@
+# Uploaded documents (user files)
+uploads/documents/*
+!uploads/documents/.gitkeep
+
+# Claude Code internal files
+.claude/
+
+# XAMPP / PHP
+*.log
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
