@@ -54,6 +54,8 @@ CREATE TABLE facility_profiles (
     logo VARCHAR(255) DEFAULT NULL,
     rating DECIMAL(3,2) DEFAULT 0.00,
     is_verified TINYINT(1) DEFAULT 0,
+    latitude DECIMAL(10, 8) DEFAULT NULL,
+    longitude DECIMAL(11, 8) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

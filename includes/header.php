@@ -6,8 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?? 'CareChain' ?> — CareChain</title>
     <link rel="stylesheet" href="/carechain/assets/css/style.css">
+    <?= $extraHead ?? '' ?>
 </head>
-<body>
+<body data-logged-in="<?= isLoggedIn() ? '1' : '0' ?>">
     <nav class="navbar">
         <a href="/carechain/" class="navbar-brand">
             <svg width="32" height="32" viewBox="0 0 64 64">
@@ -22,16 +23,29 @@
             <?php if (isLoggedIn()): ?>
                 <li><a href="/carechain/dashboard.php" class="<?= basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : '' ?>">Dashboard</a></li>
                 <li><a href="/carechain/shifts.php" class="<?= basename($_SERVER['PHP_SELF']) == 'shifts.php' ? 'active' : '' ?>">Shifts</a></li>
+                <li><a href="/carechain/map.php" class="<?= basename($_SERVER['PHP_SELF']) == 'map.php' ? 'active' : '' ?>">Map</a></li>
                 <li><a href="/carechain/profile.php" class="<?= basename($_SERVER['PHP_SELF']) == 'profile.php' ? 'active' : '' ?>">Profile</a></li>
                 <?php if (getUserRole() === 'admin'): ?>
                     <li><a href="/carechain/verify.php" class="<?= basename($_SERVER['PHP_SELF']) == 'verify.php' ? 'active' : '' ?>">Verify</a></li>
                 <?php endif; ?>
                 <li><a href="/carechain/logout.php">Logout</a></li>
-                <li><button class="wallet-btn" id="connectWallet" onclick="connectWallet()">Connect Wallet</button></li>
             <?php else: ?>
                 <li><a href="/carechain/login.php">Login</a></li>
                 <li><a href="/carechain/register.php" class="btn btn-primary btn-sm">Sign Up</a></li>
             <?php endif; ?>
+            <li class="wallet-menu" id="walletMenu">
+                <button type="button" class="wallet-btn" id="connectWallet" onclick="handleWalletClick(event)" aria-expanded="false" aria-haspopup="true">Connect Wallet</button>
+                <div class="wallet-dropdown" id="walletDropdown" role="menu" aria-hidden="true">
+                    <div class="wallet-dropdown-addr" id="walletFullAddr" onclick="copyWalletAddress()" title="Click to copy address" role="menuitem">—</div>
+                    <div class="wallet-dropdown-balance">
+                        <span>Balance</span>
+                        <span id="walletSOL" data-sol-balance>— SOL</span>
+                    </div>
+                    <button type="button" class="wallet-action-btn" onclick="refreshBalance()" role="menuitem">↻ Refresh balance</button>
+                    <button type="button" class="wallet-action-btn" onclick="requestAirdrop()" role="menuitem">⬇ Request airdrop</button>
+                    <button type="button" class="wallet-action-btn danger" onclick="disconnectWallet()" role="menuitem">Disconnect</button>
+                </div>
+            </li>
         </ul>
     </nav>
 

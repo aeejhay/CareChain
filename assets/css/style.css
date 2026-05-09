@@ -117,6 +117,7 @@ body {
 }
 
 .navbar-nav .wallet-btn {
+    position: relative;
     background: var(--gray-900);
     color: var(--white);
     padding: 0.5rem 1.2rem;
@@ -137,6 +138,101 @@ body {
     background: var(--teal-50);
     color: var(--teal-600);
     border: 1px solid var(--teal-200);
+    padding-right: 1.75rem;
+}
+
+.navbar-nav .wallet-btn.connected::after {
+    content: '▾';
+    position: absolute;
+    right: 0.65rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.65rem;
+    opacity: 0.75;
+}
+
+/* ─── WALLET DROPDOWN ─── */
+.wallet-menu {
+    position: relative;
+}
+
+.wallet-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    min-width: 230px;
+    padding: 0.6rem;
+    z-index: 1000;
+}
+
+.wallet-dropdown.open {
+    display: block;
+}
+
+.wallet-dropdown-addr {
+    font-size: 0.72rem;
+    color: var(--gray-500);
+    font-family: monospace;
+    padding: 0.45rem 0.6rem;
+    background: var(--gray-50);
+    border-radius: var(--radius-sm);
+    word-break: break-all;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.wallet-dropdown-addr:hover {
+    background: var(--teal-50);
+    color: var(--teal-600);
+}
+
+.wallet-dropdown-balance {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+    color: var(--gray-700);
+    border-bottom: 1px solid var(--gray-100);
+    margin-bottom: 0.4rem;
+}
+
+.wallet-dropdown-balance span:last-child {
+    font-weight: 600;
+    color: var(--teal-600);
+}
+
+.wallet-action-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.45rem 0.6rem;
+    border: none;
+    background: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: var(--gray-700);
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.15s;
+}
+
+.wallet-action-btn:hover {
+    background: var(--gray-50);
+}
+
+.wallet-action-btn.danger {
+    color: var(--red-400);
+}
+
+.wallet-action-btn.danger:hover {
+    background: var(--red-50);
 }
 
 /* ─── HERO ─── */
@@ -451,6 +547,150 @@ textarea.form-control {
 .page-header h2 {
     font-size: 1.4rem;
     font-weight: 600;
+}
+
+.page-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.text-muted {
+    color: var(--gray-500);
+    font-size: 0.95rem;
+}
+
+/* ─── SHIFT MAP (Leaflet) ─── */
+.map-page .page-header {
+    align-items: flex-start;
+}
+
+.map-page-lead {
+    color: var(--gray-500);
+    font-size: 0.95rem;
+    margin-top: 0.35rem;
+    max-width: 42rem;
+}
+
+.carechain-shift-map {
+    height: min(68vh, 560px);
+    width: 100%;
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-100);
+    box-shadow: var(--shadow-md);
+    z-index: 1;
+}
+
+.map-empty {
+    padding: 2rem;
+    max-width: 40rem;
+}
+
+.map-empty p {
+    margin-bottom: 1rem;
+}
+
+.map-footnote {
+    font-size: 0.82rem;
+    margin-top: 0.75rem;
+}
+
+.leaflet-container {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.map-popup-facility .map-popup-sub {
+    font-size: 0.82rem;
+    color: var(--gray-500);
+    margin: 0.2rem 0 0.5rem;
+}
+
+.map-popup-shift-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.map-popup-shift-list li {
+    margin: 0.35rem 0;
+}
+
+.map-popup-shift-list a {
+    color: var(--teal-600);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.map-popup-shift-list a:hover {
+    text-decoration: underline;
+}
+
+.map-click-hint {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--gray-700);
+}
+
+.map-click-hint a {
+    color: var(--teal-600);
+    font-weight: 500;
+}
+
+/* ─── DASHBOARD WALLET CARD ─── */
+.dashboard-wallet-card {
+    margin-bottom: 1.5rem;
+    padding: 1.25rem 1.5rem;
+}
+
+.dashboard-wallet-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+
+.dashboard-wallet-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.dashboard-wallet-copy {
+    font-size: 0.88rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.dashboard-wallet-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+.dashboard-wallet-sol {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--teal-600);
+    margin-top: 0.25rem;
+}
+
+.dashboard-wallet-saved code {
+    font-size: 0.82rem;
+    word-break: break-all;
+}
+
+.dashboard-wallet-hint {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+    .dashboard-wallet-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* ─── CREDENTIAL CARD ─── */

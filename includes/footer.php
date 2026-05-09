@@ -6,7 +6,9 @@
         </div>
     </footer>
 
-    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <?= $extraScripts ?? '' ?>
+
+    <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
     <script src="/carechain/assets/js/solana.js"></script>
 </body>
 </html>

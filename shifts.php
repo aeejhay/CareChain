@@ -263,9 +263,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $role === 'facility') {
         <!-- SHIFT LIST -->
         <div class="page-header">
             <h1><?= $role === 'facility' ? 'Your Shifts' : 'Available Shifts' ?></h1>
-            <?php if ($role === 'facility'): ?>
-                <a href="/carechain/shifts.php?action=create" class="btn btn-primary">Post a Shift</a>
-            <?php endif; ?>
+            <div class="page-header-actions">
+                <a href="/carechain/map.php" class="btn btn-outline">Map view</a>
+                <?php if ($role === 'facility'): ?>
+                    <a href="/carechain/shifts.php?action=create" class="btn btn-primary">Post a Shift</a>
+                <?php endif; ?>
+            </div>
         </div>
         
         <?php

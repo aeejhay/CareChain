@@ -7,6 +7,11 @@ if (!isLoggedIn()) redirect('/carechain/login.php');
 $role = getUserRole();
 $userId = $_SESSION['user_id'];
 
+$stmt = $pdo->prepare('SELECT wallet_address FROM users WHERE id = ?');
+$stmt->execute([$userId]);
+$userWalletRow = $stmt->fetch(PDO::FETCH_ASSOC);
+$savedWalletAddress = $userWalletRow['wallet_address'] ?? null;
+
 if ($role === 'worker') {
     // Worker dashboard data
     $stmt = $pdo->prepare("SELECT * FROM worker_profiles WHERE user_id = ?");
@@ -73,6 +78,34 @@ if ($role === 'worker') {
 ?>
 
 <div class="container">
+    <div class="card dashboard-wallet-card">
+        <div class="dashboard-wallet-card-header">
+            <h2 class="dashboard-wallet-title">Wallet (Solana devnet)</h2>
+            <button type="button" class="btn btn-outline btn-sm" onclick="refreshBalance()">Refresh balance</button>
+        </div>
+        <p class="text-muted dashboard-wallet-copy">
+            This balance is read live from devnet RPC (same as the header wallet). It is not stored in CareChain.
+            If Phantom shows a different amount, check that Phantom is set to <strong>Devnet</strong> — mainnet SOL is a separate balance.
+        </p>
+        <div class="dashboard-wallet-grid">
+            <div>
+                <div class="stat-label">Devnet SOL</div>
+                <div class="dashboard-wallet-sol" data-sol-balance>— SOL</div>
+            </div>
+            <div>
+                <div class="stat-label">Saved wallet (profile)</div>
+                <div class="dashboard-wallet-saved">
+                    <?php if ($savedWalletAddress): ?>
+                        <code><?= sanitize(substr($savedWalletAddress, 0, 8)) ?>…<?= sanitize(substr($savedWalletAddress, -8)) ?></code>
+                    <?php else: ?>
+                        <span class="text-muted">Not saved yet — connect wallet in the header</span>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <p class="dashboard-wallet-hint text-muted" id="dashboardWalletClusterHint" style="display: none;"></p>
+    </div>
+
     <?php if ($role === 'worker'): ?>
         <div class="page-header">
             <div>
