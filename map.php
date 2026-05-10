@@ -18,6 +18,10 @@ $sql = "
       AND s.shift_date >= CURDATE()
       AND fp.latitude IS NOT NULL
       AND fp.longitude IS NOT NULL
+      AND (
+          s.escrow_status IN ('funded', 'released')
+          OR (s.escrow_tx_signature IS NOT NULL AND TRIM(s.escrow_tx_signature) != '')
+      )
 ";
 $params = [];
 if ($role === 'facility') {

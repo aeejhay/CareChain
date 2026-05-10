@@ -1,11 +1,14 @@
 <?php
 $pageTitle = 'Dashboard';
-require_once 'includes/header.php';
+require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/includes/review_helpers.php';
 
-if (!isLoggedIn()) redirect('/carechain/login.php');
+if (!isLoggedIn()) {
+    redirect('/carechain/login.php');
+}
 
 $role = getUserRole();
-$userId = $_SESSION['user_id'];
+$userId = (int) $_SESSION['user_id'];
 
 $stmt = $pdo->prepare('SELECT wallet_address FROM users WHERE id = ?');
 $stmt->execute([$userId]);
@@ -75,6 +78,8 @@ if ($role === 'worker') {
     $stmt->execute([$userId]);
     $recentShifts = $stmt->fetchAll();
 }
+
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="container">
@@ -118,6 +123,12 @@ if ($role === 'worker') {
         </div>
         
         <div class="dashboard-grid">
+            <div class="stat-card stat-card-rating">
+                <div class="stat-label">Your rating</div>
+                <div class="stat-rating-stars" aria-hidden="true"><?= carechain_stars_unicode((float) ($profile['rating'] ?? 0)) ?></div>
+                <div class="stat-value teal"><?= number_format((float) ($profile['rating'] ?? 0), 1) ?></div>
+                <div class="stat-sublabel"><?= (int) ($profile['total_reviews'] ?? 0) ?> review<?= ((int) ($profile['total_reviews'] ?? 0)) === 1 ? '' : 's' ?></div>
+            </div>
             <div class="stat-card">
                 <div class="stat-label">Completed Shifts</div>
                 <div class="stat-value teal"><?= $completedShifts ?></div>
@@ -171,6 +182,12 @@ if ($role === 'worker') {
         </div>
         
         <div class="dashboard-grid">
+            <div class="stat-card stat-card-rating">
+                <div class="stat-label">Facility rating</div>
+                <div class="stat-rating-stars" aria-hidden="true"><?= carechain_stars_unicode((float) ($profile['rating'] ?? 0)) ?></div>
+                <div class="stat-value teal"><?= number_format((float) ($profile['rating'] ?? 0), 1) ?></div>
+                <div class="stat-sublabel"><?= (int) ($profile['total_reviews'] ?? 0) ?> review<?= ((int) ($profile['total_reviews'] ?? 0)) === 1 ? '' : 's' ?></div>
+            </div>
             <div class="stat-card">
                 <div class="stat-label">Active Shifts</div>
                 <div class="stat-value teal"><?= $activeShifts ?></div>

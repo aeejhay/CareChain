@@ -31,6 +31,7 @@ CREATE TABLE worker_profiles (
     availability ENUM('full_time', 'part_time', 'flexible') DEFAULT 'flexible',
     hourly_rate DECIMAL(10,2) DEFAULT NULL,
     rating DECIMAL(3,2) DEFAULT 0.00,
+    total_reviews INT DEFAULT 0,
     total_shifts INT DEFAULT 0,
     is_verified TINYINT(1) DEFAULT 0,
     credential_nft_address VARCHAR(64) DEFAULT NULL,
@@ -53,6 +54,7 @@ CREATE TABLE facility_profiles (
     description TEXT,
     logo VARCHAR(255) DEFAULT NULL,
     rating DECIMAL(3,2) DEFAULT 0.00,
+    total_reviews INT DEFAULT 0,
     is_verified TINYINT(1) DEFAULT 0,
     latitude DECIMAL(10, 8) DEFAULT NULL,
     longitude DECIMAL(11, 8) DEFAULT NULL,
@@ -75,8 +77,13 @@ CREATE TABLE shifts (
     required_experience INT DEFAULT 0,
     urgency ENUM('normal', 'urgent', 'critical') DEFAULT 'normal',
     status ENUM('open', 'claimed', 'in_progress', 'completed', 'cancelled') DEFAULT 'open',
+    escrow_status ENUM('not_funded','funded','released','failed') NOT NULL DEFAULT 'not_funded',
+    escrow_amount_sol DECIMAL(12,6) NOT NULL DEFAULT 0.000000,
     escrow_address VARCHAR(64) DEFAULT NULL,
-    escrow_tx_signature VARCHAR(128) DEFAULT NULL,
+    escrow_tx_signature VARCHAR(255) DEFAULT NULL,
+    escrow_funded_at DATETIME NULL DEFAULT NULL,
+    payment_tx_signature VARCHAR(255) DEFAULT NULL,
+    payment_released_at DATETIME NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (facility_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -90,7 +97,7 @@ CREATE TABLE shift_applications (
     applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     accepted_at TIMESTAMP NULL,
     completed_at TIMESTAMP NULL,
-    payment_tx_signature VARCHAR(128) DEFAULT NULL,
+    payment_tx_signature VARCHAR(255) DEFAULT NULL,
     FOREIGN KEY (shift_id) REFERENCES shifts(id) ON DELETE CASCADE,
     FOREIGN KEY (worker_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -109,7 +116,7 @@ CREATE TABLE documents (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Reviews / ratings
+-- Reviews / ratings (360°: facility↔worker after completed shifts)
 CREATE TABLE reviews (
     id INT AUTO_INCREMENT PRIMARY KEY,
     shift_id INT NOT NULL,
@@ -120,8 +127,15 @@ CREATE TABLE reviews (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (shift_id) REFERENCES shifts(id) ON DELETE CASCADE,
     FOREIGN KEY (reviewer_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (reviewee_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (reviewee_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY uniq_shift_reviewer_reviewee (shift_id, reviewer_id, reviewee_id)
 );
+
+-- If upgrading an existing database, run (adjust if columns already exist):
+-- ALTER TABLE worker_profiles ADD COLUMN total_reviews INT NOT NULL DEFAULT 0 AFTER rating;
+-- ALTER TABLE facility_profiles ADD COLUMN total_reviews INT NOT NULL DEFAULT 0 AFTER rating;
+-- ALTER TABLE reviews ADD UNIQUE KEY uniq_shift_reviewer_reviewee (shift_id, reviewer_id, reviewee_id);
+-- Prototype Solana escrow columns: see sql/alter_shifts_escrow.sql
 
 -- Insert admin user (password: admin123)
 INSERT INTO users (email, password, role) VALUES 

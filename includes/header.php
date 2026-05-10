@@ -24,6 +24,12 @@
                 <li><a href="/carechain/dashboard.php" class="<?= basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : '' ?>">Dashboard</a></li>
                 <li><a href="/carechain/shifts.php" class="<?= basename($_SERVER['PHP_SELF']) == 'shifts.php' ? 'active' : '' ?>">Shifts</a></li>
                 <li><a href="/carechain/map.php" class="<?= basename($_SERVER['PHP_SELF']) == 'map.php' ? 'active' : '' ?>">Map</a></li>
+                <?php if (getUserRole() === 'facility' || getUserRole() === 'admin'): ?>
+                    <li><a href="/carechain/workers.php" class="<?= basename($_SERVER['PHP_SELF']) == 'workers.php' ? 'active' : '' ?>">Workers</a></li>
+                <?php endif; ?>
+                <?php if (getUserRole() === 'worker' || getUserRole() === 'admin'): ?>
+                    <li><a href="/carechain/facilities.php" class="<?= basename($_SERVER['PHP_SELF']) == 'facilities.php' ? 'active' : '' ?>">Facilities</a></li>
+                <?php endif; ?>
                 <li><a href="/carechain/profile.php" class="<?= basename($_SERVER['PHP_SELF']) == 'profile.php' ? 'active' : '' ?>">Profile</a></li>
                 <?php if (getUserRole() === 'admin'): ?>
                     <li><a href="/carechain/verify.php" class="<?= basename($_SERVER['PHP_SELF']) == 'verify.php' ? 'active' : '' ?>">Verify</a></li>

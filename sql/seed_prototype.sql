@@ -105,3 +105,11 @@ INSERT INTO shifts (facility_id, title, description, shift_date, start_time, end
 (@fac_liffeyvale, 'Critical cover — evening', 'Short notice; extra cover for sick leave.', DATE_ADD(CURDATE(), INTERVAL 1 DAY), '16:00:00', '22:00:00', 22.00, 132.00, 'any', 1, 'critical', 'open'),
 (@fac_seapoint, 'Twilight carer', 'Tea, personal care, and settling — 6 hour block.', DATE_ADD(CURDATE(), INTERVAL 4 DAY), '16:00:00', '22:00:00', 16.00, 96.00, 'carer', 0, 'normal', 'open'),
 (@fac_seapoint, 'Weekend HCA', 'Saturday cover; activities and dining support.', DATE_ADD(CURDATE(), INTERVAL 5 DAY), '08:00:00', '20:00:00', 18.00, 216.00, 'hca', 1, 'normal', 'open');
+
+-- Mark demo open shifts as escrow-funded so workers/map see them (no on-chain tx in seed DB)
+UPDATE shifts
+SET escrow_status = 'funded',
+    escrow_amount_sol = 0.010000,
+    escrow_funded_at = NOW()
+WHERE facility_id IN (@fac_maryfield, @fac_liffeyvale, @fac_seapoint)
+  AND status = 'open';

@@ -434,83 +434,183 @@ async function mintCredentialNFT(credentialType, workerName, docId) {
     }
 }
 
-// ─── Shift Escrow ─────────────────────────────────────────────────────────────
+// ─── Prototype escrow vault (devnet) — must match config/solana_escrow.php ───
 
-async function createShiftEscrow(shiftId, amountSOL) {
-    if (!walletPublicKey || !connection) {
-        showToast('Connect your wallet first!', 'warning');
+function getPrototypeEscrowPublicKey() {
+    const raw = typeof window !== 'undefined' ? window.CARECHAIN_PROTO_ESCROW_PUBKEY : '';
+    if (!raw || typeof solanaWeb3 === 'undefined') {
+        throw new Error('Prototype escrow vault is not configured (missing CARECHAIN_PROTO_ESCROW_PUBKEY)');
+    }
+    return new solanaWeb3.PublicKey(raw);
+}
+
+async function walletApiFetch(formData) {
+    const res = await fetch('/carechain/api/wallet.php', { method: 'POST', body: formData });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) {
+        const msg = data.error || ('HTTP ' + res.status);
+        throw new Error(msg);
+    }
+    return data;
+}
+
+/**
+ * Facility funds prototype escrow: SOL transfer from Phantom wallet → Prototype Escrow Vault (devnet).
+ * Then persists signature via save_escrow.
+ */
+async function fundEscrow(shiftId, amountSol) {
+    const phantom = getPhantom();
+    if (!phantom) {
+        showToast('Please install Phantom wallet — visit phantom.app', 'error');
+        window.open('https://phantom.app/', '_blank');
         return null;
     }
-    if (!getPhantom()) return null;
+    if (!connection) {
+        initSolana();
+        if (!connection) {
+            showToast('Solana connection not ready — refresh the page.', 'error');
+            return null;
+        }
+    }
+
+    if (!walletPublicKey) {
+        showToast('Please connect Phantom wallet', 'warning');
+        await connectWallet();
+        if (!walletPublicKey) return null;
+    }
+
+    const lamports = Math.floor(Number(amountSol) * solanaWeb3.LAMPORTS_PER_SOL);
+    if (!Number.isFinite(lamports) || lamports < 1) {
+        showToast('Invalid SOL amount', 'error');
+        return null;
+    }
 
     try {
-        // Self-transfer as escrow demo; production uses PDA via Anchor
+        const vault = getPrototypeEscrowPublicKey();
         const transaction = new solanaWeb3.Transaction().add(
             solanaWeb3.SystemProgram.transfer({
                 fromPubkey: walletPublicKey,
-                toPubkey: walletPublicKey,
-                lamports: Math.floor(amountSOL * solanaWeb3.LAMPORTS_PER_SOL)
+                toPubkey: vault,
+                lamports
             })
         );
 
+        showToast('Approve the transfer in Phantom…', 'info');
         const txSignature = await sendTransaction(transaction);
 
         const fd = new FormData();
         fd.append('action', 'save_escrow');
-        fd.append('shift_id', shiftId);
-        fd.append('tx_signature', txSignature);
-        await fetch('/carechain/api/wallet.php', { method: 'POST', body: fd });
+        fd.append('shift_id', String(shiftId));
+        fd.append('escrow_tx_signature', txSignature);
+        fd.append('escrow_amount_sol', String(amountSol));
+        await walletApiFetch(fd);
 
-        showToast('Escrow funded! ' + amountSOL + ' SOL locked on-chain.', 'success');
+        showToast('Escrow funded on Solana devnet — signature saved.', 'success');
+        setTimeout(() => window.location.reload(), 800);
         return txSignature;
     } catch (err) {
-        console.error('Escrow failed:', err);
-        showToast('Escrow creation failed: ' + err.message, 'error');
+        console.error('fundEscrow failed:', err);
+        showToast(err.message || 'Escrow funding failed', 'error');
         return null;
     }
 }
 
-// ─── Payment Release ──────────────────────────────────────────────────────────
+/** @deprecated use fundEscrow */
+async function createShiftEscrow(shiftId, amountSOL) {
+    return fundEscrow(shiftId, amountSOL);
+}
 
-async function releaseEscrow(shiftId, workerAddress, amountSOL) {
-    if (!walletPublicKey || !connection) {
-        showToast('Connect your wallet first!', 'warning');
+/**
+ * After shift is completed: facility sends SOL from Phantom → worker wallet (prototype “release”).
+ */
+async function releasePayment(shiftId, workerWalletAddress, amountSol, workerId) {
+    const phantom = getPhantom();
+    if (!phantom) {
+        showToast('Please install Phantom wallet — visit phantom.app', 'error');
         return null;
     }
-    if (!getPhantom()) return null;
+    if (!connection) {
+        initSolana();
+        if (!connection) {
+            showToast('Solana connection not ready — refresh the page.', 'error');
+            return null;
+        }
+    }
+
+    if (!walletPublicKey) {
+        showToast('Please connect Phantom wallet', 'warning');
+        await connectWallet();
+        if (!walletPublicKey) return null;
+    }
+
+    if (!workerWalletAddress || typeof workerWalletAddress !== 'string') {
+        showToast('Worker wallet address missing — worker must connect wallet in CareChain', 'error');
+        return null;
+    }
+
+    let workerPubkey;
+    try {
+        workerPubkey = new solanaWeb3.PublicKey(workerWalletAddress.trim());
+    } catch (e) {
+        showToast('Worker wallet address is invalid', 'error');
+        return null;
+    }
+
+    const lamports = Math.floor(Number(amountSol) * solanaWeb3.LAMPORTS_PER_SOL);
+    if (!Number.isFinite(lamports) || lamports < 1) {
+        showToast('Invalid SOL amount', 'error');
+        return null;
+    }
 
     try {
-        const workerPubkey = new solanaWeb3.PublicKey(workerAddress);
-
         const transaction = new solanaWeb3.Transaction().add(
             solanaWeb3.SystemProgram.transfer({
                 fromPubkey: walletPublicKey,
                 toPubkey: workerPubkey,
-                lamports: Math.floor(amountSOL * solanaWeb3.LAMPORTS_PER_SOL)
+                lamports
             })
         );
 
+        showToast('Approve payment to worker in Phantom…', 'info');
         const txSignature = await sendTransaction(transaction);
 
         const fd = new FormData();
         fd.append('action', 'release_payment');
-        fd.append('shift_id', shiftId);
-        fd.append('tx_signature', txSignature);
-        await fetch('/carechain/api/wallet.php', { method: 'POST', body: fd });
+        fd.append('shift_id', String(shiftId));
+        fd.append('worker_id', String(workerId));
+        fd.append('payment_tx_signature', txSignature);
+        await walletApiFetch(fd);
 
-        showToast('Payment released! Worker has been paid on-chain.', 'success');
+        showToast('Payment released to worker wallet on devnet.', 'success');
+        setTimeout(() => window.location.reload(), 800);
         return txSignature;
     } catch (err) {
-        console.error('Payment release failed:', err);
-        showToast('Payment failed: ' + err.message, 'error');
+        console.error('releasePayment failed:', err);
+        showToast(err.message || 'Payment release failed', 'error');
         return null;
     }
 }
+
 
 // ─── Explorer Link ────────────────────────────────────────────────────────────
 
 function viewOnExplorer(txSignature) {
     window.open('https://explorer.solana.com/tx/' + txSignature + '?cluster=devnet', '_blank');
+}
+
+// Inline HTML handlers (onclick="…") resolve on `window` — bind explicitly for all browsers.
+if (typeof window !== 'undefined') {
+    window.fundEscrow = fundEscrow;
+    window.releasePayment = releasePayment;
+    window.createShiftEscrow = createShiftEscrow;
+    window.viewOnExplorer = viewOnExplorer;
+    window.connectWallet = connectWallet;
+    window.handleWalletClick = handleWalletClick;
+    window.refreshBalance = refreshBalance;
+    window.disconnectWallet = disconnectWallet;
+    window.copyWalletAddress = copyWalletAddress;
+    window.requestAirdrop = requestAirdrop;
+    window.mintCredentialNFT = mintCredentialNFT;
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
